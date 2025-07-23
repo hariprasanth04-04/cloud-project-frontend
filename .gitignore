@@ -1,0 +1,13 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE/editor folders
+.idea/
+.vscode/
+
+# Ignore output/build folders (if added later)
+out/
+build/
+
+# No node_modules since this is plain HTML/CSS/JS

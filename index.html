@@ -1,0 +1,2450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parkinson's Disease Prediction System</title>
+  <!-- Libraries -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --primary-dark: #4f46e5;
+      --secondary: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --dark: #1e293b;
+      --darker: #0f172a;
+      --light: #f8fafc;
+      --gray: #94a3b8;
+      --gray-light: #e2e8f0;
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --card-border: rgba(255, 255, 255, 0.1);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--darker), var(--dark));
+      color: var(--light);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    /* Glassmorphism Navbar */
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid var(--card-border);
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(to right, var(--primary), var(--primary-light));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .logo i {
+      font-size: 28px;
+    }
+    
+    .nav-links {
+      display: flex;
+      gap: 15px;
+    }
+    
+    .nav-links a {
+      color: var(--gray);
+      text-decoration: none;
+      padding: 8px 15px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .nav-links a:hover, .nav-links a.active {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .nav-links a.active {
+      color: var(--primary-light);
+    }
+    
+    .auth-buttons {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .auth-buttons button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .login-btn {
+      background: transparent;
+      color: var(--primary-light);
+      border: 1px solid var(--primary);
+    }
+    
+    .login-btn:hover {
+      background: rgba(99, 102, 241, 0.1);
+    }
+    
+    .signup-btn {
+      background: var(--primary);
+      color: white;
+    }
+    
+    .signup-btn:hover {
+      background: var(--primary-dark);
+    }
+    
+    /* Dashboard Layout */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+    
+    /* Glassmorphism Sidebar */
+    .sidebar {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 20px;
+      height: fit-content;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    
+    .sidebar-header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    
+    .sidebar-header h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .sidebar-header p {
+      font-size: 12px;
+      color: var(--gray);
+    }
+    
+    .sidebar-menu {
+      list-style: none;
+    }
+    
+    .sidebar-menu li {
+      margin-bottom: 8px;
+    }
+    
+    .sidebar-menu a {
+      color: var(--gray);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    
+    .sidebar-menu a:hover, .sidebar-menu a.active {
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--primary-light);
+    }
+    
+    .sidebar-menu i {
+      width: 24px;
+      text-align: center;
+      font-size: 18px;
+    }
+    
+    /* Main Content */
+    .main-content {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    /* Glassmorphism Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .card-title i {
+      color: var(--primary-light);
+    }
+    
+    .card-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    /* Map */
+    #diseaseMap {
+      height: 400px;
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+    }
+    
+    /* Charts */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 100%;
+    }
+    
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--gray-light);
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.5);
+      color: white;
+      font-family: inherit;
+      border: 1px solid var(--card-border);
+      transition: all 0.3s ease;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    
+    input::placeholder {
+      color: var(--gray);
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      background: var(--primary);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn-danger {
+      background: var(--danger);
+    }
+    
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    
+    .btn-success {
+      background: var(--secondary);
+    }
+    
+    .btn-success:hover {
+      background: #059669;
+    }
+    
+    .btn-warning {
+      background: var(--warning);
+    }
+    
+    .btn-warning:hover {
+      background: #d97706;
+    }
+    
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+    
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+    }
+    
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+    
+    th {
+      background: rgba(30, 41, 59, 0.8);
+      font-weight: 600;
+      color: var(--gray-light);
+    }
+    
+    tr:hover {
+      background: rgba(99, 102, 241, 0.05);
+    }
+    
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 20px;
+    }
+    
+    .tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      font-weight: 500;
+      color: var(--gray);
+      transition: all 0.3s ease;
+    }
+    
+    .tab:hover {
+      color: white;
+    }
+    
+    .tab.active {
+      color: var(--primary-light);
+      border-bottom: 3px solid var(--primary);
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Utility Classes */
+    .flex {
+      display: flex;
+    }
+    
+    .flex-col {
+      flex-direction: column;
+    }
+    
+    .justify-between {
+      justify-content: space-between;
+    }
+    
+    .items-center {
+      align-items: center;
+    }
+    
+    .gap-4 {
+      gap: 1rem;
+    }
+    
+    .gap-6 {
+      gap: 1.5rem;
+    }
+    
+    .mt-4 {
+      margin-top: 1rem;
+    }
+    
+    .mb-4 {
+      margin-bottom: 1rem;
+    }
+    
+    .text-center {
+      text-align: center;
+    }
+    
+    .text-danger {
+      color: var(--danger);
+    }
+    
+    .text-success {
+      color: var(--secondary);
+    }
+    
+    .text-warning {
+      color: var(--warning);
+    }
+    
+    .text-info {
+      color: var(--info);
+    }
+    
+    .bg-danger {
+      background: var(--danger);
+    }
+    
+    .bg-success {
+      background: var(--secondary);
+    }
+    
+    .bg-warning {
+      background: var(--warning);
+    }
+    
+    .bg-info {
+      background: var(--info);
+    }
+    
+    /* Audio Recorder */
+    .audio-recorder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+      border: 2px dashed var(--card-border);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      background: rgba(15, 23, 42, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .audio-recorder:hover {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.05);
+    }
+    
+    .audio-recorder i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: var(--primary-light);
+    }
+    
+    .audio-recorder p {
+      color: var(--gray);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    
+    .recorder-controls {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .recorder-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .recorder-btn:hover {
+      transform: scale(1.05);
+    }
+    
+    .recorder-btn:active {
+      transform: scale(0.98);
+    }
+    
+    .record-btn {
+      background: var(--danger);
+      color: white;
+    }
+    
+    .stop-btn {
+      background: var(--dark);
+      color: white;
+    }
+    
+    .upload-btn {
+      background: var(--primary);
+      color: white;
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--card-border);
+      transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-title {
+      font-size: 14px;
+      color: var(--gray);
+      margin-bottom: 8px;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .stat-change {
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .stat-change.up {
+      color: var(--secondary);
+    }
+    
+    .stat-change.down {
+      color: var(--danger);
+    }
+    
+    /* Prediction Result */
+    .prediction-result {
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--card-border);
+      animation: fadeIn 0.5s ease;
+    }
+    
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .result-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    
+    .result-positive .result-icon {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--danger);
+    }
+    
+    .result-negative .result-icon {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--secondary);
+    }
+    
+    .result-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .result-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+    
+    .result-detail {
+      background: rgba(15, 23, 42, 0.3);
+      padding: 12px;
+      border-radius: 8px;
+    }
+    
+    .detail-label {
+      font-size: 12px;
+      color: var(--gray);
+      margin-bottom: 4px;
+    }
+    
+    .detail-value {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .modal-content {
+      background: var(--dark);
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      padding: 24px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      position: relative;
+      animation: slideUp 0.3s ease;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .modal-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .close-modal {
+      background: none;
+      border: none;
+      color: var(--gray);
+      font-size: 24px;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+    
+    .close-modal:hover {
+      color: white;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+      
+      .sidebar {
+        display: none;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+      }
+      
+      .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .auth-buttons {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      
+      .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      
+      .card-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .tabs {
+        overflow-x: auto;
+        padding-bottom: 8px;
+      }
+      
+      .tab {
+        padding: 8px 16px;
+        white-space: nowrap;
+      }
+      
+      .recorder-controls {
+        gap: 12px;
+      }
+      
+      .recorder-btn {
+        width: 48px;
+        height: 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="logo">
+      <i class="fas fa-brain"></i>
+      <span>NeuroPredict</span>
+    </div>
+    <div class="nav-links">
+      <a data-section="dashboard" class="active"><i class="fas fa-chart-pie"></i> Dashboard</a>
+      <a data-section="analytics"><i class="fas fa-chart-line"></i> Analytics</a>
+      <a data-section="history"><i class="fas fa-history"></i> History</a>
+      <a data-section="globalData"><i class="fas fa-globe"></i> Global</a>
+      <a data-section="aboutParkinson"><i class="fas fa-info-circle"></i> About</a>
+    </div>
+    <div class="auth-buttons">
+      <button class="login-btn"><i class="fas fa-sign-in-alt"></i> Login</button>
+      <button class="signup-btn"><i class="fas fa-user-plus"></i> Sign Up</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Dashboard Layout -->
+    <div class="dashboard">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <img src="https://ui-avatars.com/api/?name=John+Doe&background=6366f1&color=fff" alt="User">
+          <div>
+            <h3>Dr. John Doe</h3>
+            <p>Neurologist</p>
+          </div>
+        </div>
+        <ul class="sidebar-menu">
+          <li><a data-section="dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Overview</a></li>
+          <li><a data-section="voiceAnalysis"><i class="fas fa-microphone"></i> Voice Analysis</a></li>
+          <li><a data-section="riskAssessment"><i class="fas fa-chart-pie"></i> Risk Assessment</a></li>
+          <li><a data-section="patients"><i class="fas fa-user-friends"></i> Patients</a></li>
+          <li><a data-section="reports"><i class="fas fa-file-alt"></i> Reports</a></li>
+          <li><a data-section="settings"><i class="fas fa-cog"></i> Settings</a></li>
+        </ul>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Dashboard Section -->
+        <div id="dashboardSection">
+          <h1 class="section-title"><i class="fas fa-chart-pie"></i> Dashboard Overview</h1>
+          
+          <!-- Stats Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-title">Total Predictions</div>
+              <div class="stat-value">1,248</div>
+              <div class="stat-change up">
+                <i class="fas fa-arrow-up"></i> 12% from last month
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-title">Positive Cases</div>
+              <div class="stat-value text-danger">312</div>
+              <div class="stat-change up">
+                <i class="fas fa-arrow-up"></i> 8% from last month
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-title">Negative Cases</div>
+              <div class="stat-value text-success">936</div>
+              <div class="stat-change down">
+                <i class="fas fa-arrow-down"></i> 4% from last month
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-title">Avg. Confidence</div>
+              <div class="stat-value">87.5%</div>
+              <div class="stat-change up">
+                <i class="fas fa-arrow-up"></i> 2% from last month
+              </div>
+            </div>
+          </div>
+          
+          <!-- Global Disease Occurrence Map -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-map-marked-alt"></i> Global Parkinson's Occurrence</div>
+              <div class="card-actions">
+                <select id="mapTimeFilter" class="btn btn-secondary btn-sm">
+                  <option>Last 12 Months</option>
+                  <option>Last 5 Years</option>
+                  <option>All Time</option>
+                </select>
+                <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+              </div>
+            </div>
+            <div id="diseaseMap"></div>
+          </div>
+          
+          <!-- Age-Based Risk Graph -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-chart-bar"></i> Age-Based Risk Assessment</div>
+              <div class="card-actions">
+                <select id="ageRiskFilter" class="btn btn-secondary btn-sm">
+                  <option>All Data</option>
+                  <option>Positive Cases</option>
+                  <option>Negative Cases</option>
+                </select>
+              </div>
+            </div>
+            <div class="chart-container">
+              <canvas id="ageRiskChart"></canvas>
+            </div>
+          </div>
+          
+          <!-- Tabs for Prediction and Voice Analysis -->
+          <div class="card">
+            <div class="tabs">
+              <div class="tab active" onclick="switchTab('prediction')">New Prediction</div>
+              <div class="tab" onclick="switchTab('voiceAnalysis')">Voice Analysis</div>
+              <div class="tab" onclick="switchTab('comparison')">Comparative Analysis</div>
+            </div>
+            
+            <!-- Prediction Tab -->
+            <div id="predictionTab" class="tab-content active">
+              <form id="predictionForm">
+                <div class="flex gap-6 mb-4">
+                  <div class="form-group" style="flex: 1;">
+                    <label for="patientName">Patient Name</label>
+                    <input type="text" id="patientName" placeholder="Enter patient name" required>
+                  </div>
+                  
+                  <div class="form-group" style="flex: 1;">
+                    <label for="patientAge">Age</label>
+                    <input type="number" id="patientAge" placeholder="Enter age" min="0" required>
+                  </div>
+                  
+                  <div class="form-group" style="flex: 1;">
+                    <label for="patientLocation">Location (Country)</label>
+                    <input type="text" id="patientLocation" placeholder="Enter country" required>
+                  </div>
+                </div>
+                
+                <h3 class="mt-4 mb-2">Voice Features</h3>
+                
+                <div class="flex gap-6">
+                  <div style="flex: 1;">
+                    <div class="form-group">
+                      <label for="fo">MDVP: Fo (Hz)</label>
+                      <input type="number" step="0.01" id="fo" placeholder="Average vocal frequency" required>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label for="jitter">Jitter (%)</label>
+                      <input type="number" step="0.01" id="jitter" placeholder="Frequency variations" required>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label for="shimmer">Shimmer (dB)</label>
+                      <input type="number" step="0.01" id="shimmer" placeholder="Amplitude variations" required>
+                    </div>
+                  </div>
+                  
+                  <div style="flex: 1;">
+                    <div class="form-group">
+                      <label for="nhr">NHR</label>
+                      <input type="number" step="0.01" id="nhr" placeholder="Noise-to-harmonics ratio" required>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label for="hnr">HNR</label>
+                      <input type="number" step="0.01" id="hnr" placeholder="Harmonics-to-noise ratio" required>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label for="ppe">PPE</label>
+                      <input type="number" step="0.01" id="ppe" placeholder="Pitch period entropy" required>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="flex justify-between mt-4">
+                  <button type="reset" class="btn btn-secondary"><i class="fas fa-redo"></i> Reset</button>
+                  <button type="submit" class="btn"><i class="fas fa-brain"></i> Predict Parkinson's Risk</button>
+                </div>
+              </form>
+              <div id="predictionResult" class="prediction-result" style="display: none;"></div>
+            </div>
+            
+            <!-- Voice Analysis Tab -->
+            <div id="voiceAnalysisTab" class="tab-content">
+              <div class="audio-recorder">
+                <i class="fas fa-microphone"></i>
+                <p>Record your voice or upload a WAV file for analysis</p>
+                
+                <div class="recorder-controls">
+                  <div class="recorder-btn record-btn" title="Record" id="recordBtn">
+                    <i class="fas fa-microphone"></i>
+                  </div>
+                  <div class="recorder-btn stop-btn" title="Stop" id="stopBtn" disabled>
+                    <i class="fas fa-stop"></i>
+                  </div>
+                  <div class="recorder-btn upload-btn" title="Upload File" id="uploadBtn">
+                    <i class="fas fa-upload"></i>
+                  </div>
+                </div>
+                
+                <div class="mt-3" id="audioVisualizer" style="width: 100%; height: 100px; background: rgba(15,23,42,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--gray);">
+                  <p>Audio visualization will appear here</p>
+                </div>
+              </div>
+              
+              <div id="extractedFeatures" style="display: none;">
+                <h3>Extracted Voice Features</h3>
+                <table id="featuresTable">
+                  <tr>
+                    <th>Feature</th>
+                    <th>Value</th>
+                    <th>Normal Range</th>
+                    <th>Status</th>
+                  </tr>
+                </table>
+                
+                <div class="flex justify-end mt-4">
+                  <button class="btn" id="runPredictionFromFeatures"><i class="fas fa-brain"></i> Run Prediction with These Features</button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Comparative Analysis Tab -->
+            <div id="comparisonTab" class="tab-content">
+              <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+              </div>
+              
+              <div class="mt-4">
+                <h3>Feature Comparison</h3>
+                <p>This radar chart compares the patient's voice features against typical values for Parkinson's patients and healthy individuals.</p>
+                
+                <div class="flex gap-6 mt-4">
+                  <div style="flex: 1;">
+                    <div class="card">
+                      <h4>Key Observations</h4>
+                      <ul id="keyObservations" class="mt-2" style="list-style-type: none;"></ul>
+                    </div>
+                  </div>
+                  <div style="flex: 1;">
+                    <div class="card">
+                      <h4>Recommendations</h4>
+                      <ul id="recommendations" class="mt-2" style="list-style-type: none;"></ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Prediction History -->
+          <div class="card" id="historySection">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-history"></i> Prediction History</div>
+              <div class="card-actions">
+                <input type="text" id="searchName" placeholder="Search by name..." class="btn btn-secondary btn-sm">
+                <select id="resultFilter" class="btn btn-secondary btn-sm">
+                  <option>All Results</option>
+                  <option>Positive Only</option>
+                  <option>Negative Only</option>
+                </select>
+                <select id="timeFilter" class="btn btn-secondary btn-sm">
+                  <option>Last 30 Days</option>
+                  <option>Last 6 Months</option>
+                  <option>Last Year</option>
+                  <option>All Time</option>
+                </select>
+              </div>
+            </div>
+            
+            <table id="historyTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Patient</th>
+                  <th>Age</th>
+                  <th>Location</th>
+                  <th>Result</th>
+                  <th>Confidence</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody">
+              </tbody>
+            </table>
+            
+            <div class="flex justify-between items-center mt-4">
+              <div id="paginationInfo" class="text-sm text-gray-400">Showing 1-4 of 1248 predictions</div>
+              <div class="flex gap-2">
+                <button id="prevPage" class="btn btn-secondary btn-sm"><i class="fas fa-chevron-left"></i> Previous</button>
+                <button id="nextPage" class="btn btn-secondary btn-sm">Next <i class="fas fa-chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="analyticsSection" style="display: none;">
+          <h1 class="section-title"><i class="fas fa-chart-line"></i> Analytics Dashboard</h1>
+          
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="fas fa-chart-pie"></i> Analytics Overview</div>
+              <div class="card-actions">
+                <select id="analyticsTimeFilter" class="btn btn-secondary btn-sm">
+                    <option>Last 30 Days</option>
+                    <option>Last 6 Months</option>
+                    <option>Last Year</option>
+                    <option>All Time</option>
+                  </select>
+                  <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+                </div>
+              </div>
+              
+              <div class="flex gap-6 mb-6">
+                <div style="flex: 1;">
+                  <div class="chart-container">
+                    <canvas id="resultPieChart"></canvas>
+                  </div>
+                </div>
+                <div style="flex: 1;">
+                  <div class="chart-container">
+                    <canvas id="ageDistributionChart"></canvas>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="chart-container">
+                <canvas id="monthlyTrendsChart"></canvas>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Global Data Section -->
+          <div id="globalDataSection" style="display: none;">
+            <h1 class="section-title"><i class="fas fa-globe"></i> Global Data</h1>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fas fa-map-marked-alt"></i> Worldwide Parkinson's Statistics</div>
+                <div class="card-actions">
+                  <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+                </div>
+              </div>
+              <div class="flex gap-6">
+                <div style="flex: 1;">
+                  <h3 class="mb-4">Prevalence by Region</h3>
+                  <div class="chart-container">
+                    <canvas id="regionChart"></canvas>
+                  </div>
+                </div>
+                <div style="flex: 1;">
+                  <h3 class="mb-4">Top 10 Countries</h3>
+                  <div class="chart-container">
+                    <canvas id="countriesChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Settings Section -->
+          <div id="settingsSection" style="display: none;">
+            <h1 class="section-title"><i class="fas fa-cog"></i> Settings</h1>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fas fa-user-cog"></i> Account Settings</div>
+              </div>
+              <form id="settingsForm">
+                <div class="form-group">
+                  <label for="userName">Name</label>
+                  <input type="text" id="userName" value="Dr. John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="userEmail">Email</label>
+                  <input type="email" id="userEmail" value="john.doe@example.com" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="userSpecialty">Specialty</label>
+                  <input type="text" id="userSpecialty" value="Neurology" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="userInstitution">Institution</label>
+                  <input type="text" id="userInstitution" value="City General Hospital" required>
+                </div>
+                
+                <div class="flex justify-end mt-4">
+                  <button type="button" class="btn btn-secondary mr-3">Cancel</button>
+                  <button type="submit" class="btn">Save Changes</button>
+                </div>
+              </form>
+            </div>
+            
+            <div class="card mt-6">
+              <div class="card-header">
+                <div class="card-title"><i class="fas fa-bell"></i> Notification Preferences</div>
+              </div>
+              <form id="notificationForm">
+                <div class="form-group">
+                  <label>
+                    <input type="checkbox" checked> Email notifications
+                  </label>
+                </div>
+                
+                <div class="form-group">
+                  <label>
+                    <input type="checkbox" checked> New prediction alerts
+                  </label>
+                </div>
+                
+                <div class="form-group">
+                  <label>
+                    <input type="checkbox"> Weekly summary reports
+                  </label>
+                </div>
+                
+                <div class="flex justify-end mt-4">
+                  <button type="submit" class="btn">Update Preferences</button>
+                </div>
+              </form>
+            </div>
+          </div>
+  
+          <!-- Voice Analysis Section -->
+          <div id="voiceAnalysisSection" style="display: none;">
+            <h1 class="section-title"><i class="fas fa-microphone"></i> Voice Analysis</h1>
+            <div class="card">
+              <p>Redirecting to Voice Analysis tab...</p>
+            </div>
+          </div>
+  
+          <!-- Risk Assessment Section -->
+          <div id="riskAssessmentSection" style="display: none;">
+            <h1 class="section-title"><i class="fas fa-chart-pie"></i> Risk Assessment</h1>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fas fa-user-shield"></i> Patient Risk Profiles</div>
+                <div class="card-actions">
+                  <button class="btn btn-sm"><i class="fas fa-download"></i> Export</button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="riskProfileChart"></canvas>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Patients Section -->
+          <div id="patientsSection" style="display: none;">
+            <h1 class="section-title"><i class="fas fa-user-friends"></i> Patient Management</h1>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fas fa-users"></i> Patient List</div>
+                <div class="card-actions">
+                  <button class="btn btn-sm" id="addPatientBtn"><i class="fas fa-plus"></i> Add Patient</button>
+                </div>
+              </div>
+              <table id="patientsTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Last Test</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>PT-1001</td>
+                    <td>John Smith</td>
+                    <td>65</td>
+                    <td>Male</td>
+                    <td>2023-05-15</td>
+                    <td><span class="text-danger">High Risk</span></td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></button>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>PT-1002</td>
+                    <td>Maria Garcia</td>
+                    <td>58</td>
+                    <td>Female</td>
+                    <td>2023-05-14</td>
+                    <td><span class="text-success">Low Risk</span></td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></button>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>PT-1003</td>
+                    <td>Robert Johnson</td>
+                    <td>72</td>
+                    <td>Male</td>
+                    <td>2023-05-12</td>
+                    <td><span class="text-danger">High Risk</span></td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></button>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>PT-1004</td>
+                    <td>Sarah Chen</td>
+                    <td>61</td>
+                    <td>Female</td>
+                    <td>2023-05-10</td>
+                    <td><span class="text-success">Low Risk</span></td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i></button>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+  
+          <!-- Reports Section -->
+          <div id="reportsSection" style="display: none;">
+            <h1 class="section-title"><i class="fas fa-file-alt"></i> Reports</h1>
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><i class="fas fa-file-export"></i> Generate Reports</div>
+              </div>
+              <div class="flex gap-6">
+                <div class="card" style="flex: 1; cursor: pointer;" onclick="generateReport('monthly')">
+                  <div class="card-title"><i class="fas fa-calendar-alt"></i> Monthly Summary</div>
+                  <p>Generate a comprehensive report of all predictions and results for the selected month.</p>
+                </div>
+                <div class="card" style="flex: 1; cursor: pointer;" onclick="generateReport('patient')">
+                  <div class="card-title"><i class="fas fa-user"></i> Patient Report</div>
+                  <p>Create a detailed report for a specific patient including all test results and trends.</p>
+                </div>
+                <div class="card" style="flex: 1; cursor: pointer;" onclick="generateReport('statistical')">
+                  <div class="card-title"><i class="fas fa-chart-bar"></i> Statistical Analysis</div>
+                  <p>Generate statistical reports on prediction accuracy, feature correlations, and more.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div class="card mt-6">
+              <div class="card-header">
+                <div class="card-title"><i class="fas fa-file-download"></i> Recent Reports</div>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Report Name</th>
+                    <th>Generated On</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>May 2023 Summary</td>
+                    <td>2023-06-01</td>
+                    <td>Monthly</td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-download"></i> Download</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>John Smith - Patient Report</td>
+                    <td>2023-05-16</td>
+                    <td>Patient</td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-download"></i> Download</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>Q2 Statistical Analysis</td>
+                    <td>2023-04-01</td>
+                    <td>Statistical</td>
+                    <td>
+                      <button class="btn btn-secondary btn-sm"><i class="fas fa-download"></i> Download</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+  
+          <!-- About Parkinson's Section -->
+          <div id="aboutParkinsonSection" style="display: none;">
+            <h1 class="section-title"><i class="fas fa-info-circle"></i> About Parkinson's Disease</h1>
+            <div class="card">
+              <div class="flex gap-6">
+                <div style="flex: 2;">
+                  <h3>What is Parkinson's Disease?</h3>
+                  <p class="mt-2">Parkinson's disease is a progressive neurodegenerative disorder that primarily affects movement. It occurs when nerve cells (neurons) in the brain that produce dopamine, a chemical that coordinates movement, become impaired or die.</p>
+                  
+                  <h3 class="mt-4">Common Symptoms</h3>
+                  <div class="flex gap-6 mt-3">
+                    <div style="flex: 1;">
+                      <div class="card">
+                        <div class="card-title"><i class="fas fa-hand-paper text-warning"></i> Tremors</div>
+                        <p>Involuntary shaking, usually beginning in the hands or fingers</p>
+                      </div>
+                    </div>
+                    <div style="flex: 1;">
+                      <div class="card">
+                        <div class="card-title"><i class="fas fa-turtle text-info"></i> Bradykinesia</div>
+                        <p>Slowed movement making simple tasks difficult and time-consuming</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex gap-6 mt-3">
+                    <div style="flex: 1;">
+                      <div class="card">
+                        <div class="card-title"><i class="fas fa-lock text-danger"></i> Rigidity</div>
+                        <p>Muscle stiffness that can limit range of motion and cause pain</p>
+                      </div>
+                    </div>
+                    <div style="flex: 1;">
+                      <div class="card">
+                        <div class="card-title"><i class="fas fa-balance-scale text-success"></i> Postural Instability</div>
+                        <p>Impaired balance and coordination leading to falls</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <h3 class="mt-4">Voice Symptoms in Parkinson's</h3>
+                  <ul class="mt-2" style="list-style-type: none;">
+                    <li class="mb-2"><i class="fas fa-chevron-right text-primary"></i> Soft or low voice (hypophonia)</li>
+                    <li class="mb-2"><i class="fas fa-chevron-right text-primary"></i> Monotone speech with reduced inflection</li>
+                    <li class="mb-2"><i class="fas fa-chevron-right text-primary"></i> Hoarse or breathy voice quality</li>
+                    <li class="mb-2"><i class="fas fa-chevron-right text-primary"></i> Imprecise articulation</li>
+                    <li class="mb-2"><i class="fas fa-chevron-right text-primary"></i> Variable speech rate (too fast or too slow)</li>
+                  </ul>
+                </div>
+                
+                <div style="flex: 1;">
+                  <div class="card">
+                    <h3>How Our System Works</h3>
+                    <p class="mt-2">Our Parkinson's prediction system analyzes voice characteristics that are known to be affected by Parkinson's disease:</p>
+                    
+                    <div class="mt-4">
+                      <div class="flex items-center gap-3 mb-3">
+                        <div class="bg-primary rounded-full w-8 h-8 flex items-center justify-center text-white">
+                          <i class="fas fa-wave-square"></i>
+                        </div>
+                        <div>
+                          <h4>Jitter and Shimmer</h4>
+                          <p class="text-sm">Measures of voice stability and regularity</p>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-center gap-3 mb-3">
+                        <div class="bg-primary rounded-full w-8 h-8 flex items-center justify-center text-white">
+                          <i class="fas fa-volume-up"></i>
+                        </div>
+                        <div>
+                          <h4>Harmonic-to-Noise Ratio</h4>
+                          <p class="text-sm">Measures voice quality and clarity</p>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-center gap-3 mb-3">
+                        <div class="bg-primary rounded-full w-8 h-8 flex items-center justify-center text-white">
+                          <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div>
+                          <h4>Fundamental Frequency</h4>
+                          <p class="text-sm">Measures pitch variations and stability</p>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-center gap-3">
+                        <div class="bg-primary rounded-full w-8 h-8 flex items-center justify-center text-white">
+                          <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <div>
+                          <h4>Machine Learning Analysis</h4>
+                          <p class="text-sm">Advanced algorithms detect subtle patterns</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="card mt-6">
+                    <h3>Resources</h3>
+                    <ul class="mt-2" style="list-style-type: none;">
+                      <li class="mb-2"><a href="#" class="text-primary hover:underline"><i class="fas fa-external-link-alt mr-2"></i> Parkinson's Foundation</a></li>
+                      <li class="mb-2"><a href="#" class="text-primary hover:underline"><i class="fas fa-external-link-alt mr-2"></i> National Institute of Neurological Disorders</a></li>
+                      <li class="mb-2"><a href="#" class="text-primary hover:underline"><i class="fas fa-external-link-alt mr-2"></i> Voice Analysis Research</a></li>
+                      <li><a href="#" class="text-primary hover:underline"><i class="fas fa-external-link-alt mr-2"></i> Treatment Options</a></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Add Patient Modal -->
+    <div class="modal" id="addPatientModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Add New Patient</h3>
+          <button class="close-modal">&times;</button>
+        </div>
+        <form id="addPatientForm">
+          <div class="form-group">
+            <label for="newPatientName">Full Name</label>
+            <input type="text" id="newPatientName" required>
+          </div>
+          
+          <div class="flex gap-6">
+            <div class="form-group" style="flex: 1;">
+              <label for="newPatientAge">Age</label>
+              <input type="number" id="newPatientAge" min="0" required>
+            </div>
+            
+            <div class="form-group" style="flex: 1;">
+              <label for="newPatientGender">Gender</label>
+              <select id="newPatientGender" required>
+                <option value="">Select</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="newPatientEmail">Email</label>
+            <input type="email" id="newPatientEmail">
+          </div>
+          
+          <div class="form-group">
+            <label for="newPatientPhone">Phone</label>
+            <input type="tel" id="newPatientPhone">
+          </div>
+          
+          <div class="flex justify-end mt-4">
+            <button type="button" class="btn btn-secondary mr-3 close-modal">Cancel</button>
+            <button type="submit" class="btn">Add Patient</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  
+    <script>
+      // Simulated database for prediction history
+      let predictionHistory = [
+        { date: "2023-05-15", patient: "John Smith", age: 65, location: "USA", result: "Positive", confidence: 87, features: { fo: 148.5, jitter: 0.72, shimmer: 0.35, nhr: 0.15, hnr: 16.8, ppe: 0.52 } },
+        { date: "2023-05-14", patient: "Maria Garcia", age: 58, location: "Spain", result: "Negative", confidence: 92, features: { fo: 142.1, jitter: 0.42, shimmer: 0.22, nhr: 0.08, hnr: 22.3, ppe: 0.28 } },
+        { date: "2023-05-12", patient: "Robert Johnson", age: 72, location: "UK", result: "Positive", confidence: 78, features: { fo: 145.2, jitter: 0.68, shimmer: 0.32, nhr: 0.12, hnr: 18.4, ppe: 0.45 } },
+        { date: "2023-05-10", patient: "Sarah Chen", age: 61, location: "Canada", result: "Negative", confidence: 95, features: { fo: 140.0, jitter: 0.38, shimmer: 0.20, nhr: 0.07, hnr: 23.5, ppe: 0.25 } }
+      ];
+      let currentPage = 1;
+      const itemsPerPage = 4;
+  
+      // Initialize Leaflet Map
+      const map = L.map('diseaseMap').setView([20, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+      
+      const countries = [
+        {name: "USA", lat: 37.8, lng: -96, cases: 125, severity: 0.7},
+        {name: "UK", lat: 55.4, lng: -3.4, cases: 87, severity: 0.6},
+        {name: "Japan", lat: 36.2, lng: 138.3, cases: 92, severity: 0.5},
+        {name: "Brazil", lat: -14.2, lng: -51.9, cases: 45, severity: 0.4},
+        {name: "Australia", lat: -25.3, lng: 133.8, cases: 38, severity: 0.3}
+      ];
+      
+      countries.forEach(country => {
+        const radius = Math.sqrt(country.cases) * 3;
+        const color = `hsl(${30 + country.severity * 60}, 100%, 50%)`;
+        L.circleMarker([country.lat, country.lng], {
+          radius: radius,
+          fillColor: color,
+          color: "#000",
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(map)
+          .bindPopup(`<b>${country.name}</b><br>Cases: ${country.cases} per 100k`);
+      });
+      
+      // Initialize Charts
+      const ageRiskCtx = document.getElementById('ageRiskChart').getContext('2d');
+      let ageRiskChart = new Chart(ageRiskCtx, {
+        type: 'bar',
+        data: {
+          labels: ['40-49', '50-59', '60-69', '70-79', '80+'],
+          datasets: [{
+            label: 'Parkinson\'s Prevalence',
+            data: [5, 15, 35, 55, 65],
+            backgroundColor: 'rgba(99, 102, 241, 0.7)',
+            borderColor: 'rgba(99, 102, 241, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Cases per 1000 people' } },
+            x: { title: { display: true, text: 'Age Group' } }
+          }
+        }
+      });
+      
+      const resultPieCtx = document.getElementById('resultPieChart').getContext('2d');
+      let resultPieChart = new Chart(resultPieCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Positive', 'Negative'],
+          datasets: [{
+            data: [312, 936],
+            backgroundColor: ['#ef4444', '#10b981'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = Math.round((value / total) * 100);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      const ageDistCtx = document.getElementById('ageDistributionChart').getContext('2d');
+      let ageDistChart = new Chart(ageDistCtx, {
+        type: 'line',
+        data: {
+          labels: ['40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', '80+'],
+          datasets: [{
+            label: 'Positive Cases',
+            data: [5, 12, 28, 45, 62, 75, 58, 42, 35],
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            fill: true,
+            tension: 0.3
+          }, {
+            label: 'Negative Cases',
+            data: [25, 38, 52, 65, 58, 45, 32, 25, 18],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Number of Cases' } },
+            x: { title: { display: true, text: 'Age Group' } }
+          }
+        }
+      });
+      
+      const monthlyTrendsCtx = document.getElementById('monthlyTrendsChart').getContext('2d');
+      let monthlyTrendsChart = new Chart(monthlyTrendsCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+          datasets: [{
+            label: 'Positive Predictions',
+            data: [12, 18, 22, 15, 28, 24, 19, 25, 30, 22, 18, 14],
+            backgroundColor: 'rgba(239, 68, 68, 0.7)',
+            borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 1
+          }, {
+            label: 'Total Predictions',
+            data: [45, 52, 60, 48, 65, 58, 50, 62, 75, 68, 55, 48],
+            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Number of Predictions' } },
+            x: { title: { display: true, text: 'Month' } }
+          }
+        }
+      });
+  
+      const regionCtx = document.getElementById('regionChart').getContext('2d');
+      let regionChart = new Chart(regionCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['North America', 'Europe', 'Asia', 'South America', 'Africa', 'Oceania'],
+          datasets: [{
+            data: [35, 30, 20, 8, 5, 2],
+            backgroundColor: [
+              'rgba(99, 102, 241, 0.7)',
+              'rgba(59, 130, 246, 0.7)',
+              'rgba(16, 185, 129, 0.7)',
+              'rgba(245, 158, 11, 0.7)',
+              'rgba(239, 68, 68, 0.7)',
+              'rgba(139, 92, 246, 0.7)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+  
+      const countriesCtx = document.getElementById('countriesChart').getContext('2d');
+      let countriesChart = new Chart(countriesCtx, {
+        type: 'bar',
+        data: {
+          labels: ['USA', 'UK', 'Japan', 'Germany', 'Canada', 'France', 'Italy', 'Brazil', 'Australia', 'Spain'],
+          datasets: [{
+            label: 'Cases per 100k',
+            data: [125, 87, 92, 78, 65, 72, 68, 45, 38, 55],
+            backgroundColor: 'rgba(99, 102, 241, 0.7)',
+            borderColor: 'rgba(99, 102, 241, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Cases per 100k' } },
+            x: { title: { display: true, text: 'Country' } }
+          }
+        }
+      });
+  
+      const riskProfileCtx = document.getElementById('riskProfileChart').getContext('2d');
+      let riskProfileChart = new Chart(riskProfileCtx, {
+        type: 'radar',
+        data: {
+          labels: ['Age', 'Family History', 'Voice Analysis', 'Motor Symptoms', 'Cognitive Tests', 'Genetic Factors'],
+          datasets: [{
+            label: 'Low Risk Profile',
+            data: [20, 10, 15, 5, 10, 5],
+            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+            borderColor: 'rgba(16, 185, 129, 1)',
+            borderWidth: 2
+          }, {
+            label: 'High Risk Profile',
+            data: [80, 70, 85, 75, 60, 65],
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            borderColor: 'rgba(239, 68, 68, 1)',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            r: {
+              angleLines: { display: true },
+              suggestedMin: 0,
+              suggestedMax: 100
+            }
+          }
+        }
+      });
+      
+      let comparisonChart;
+      function updateComparisonChart(features) {
+        const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+        if (comparisonChart) comparisonChart.destroy();
+        comparisonChart = new Chart(comparisonCtx, {
+          type: 'radar',
+          data: {
+            labels: ['Fo (Hz)', 'Jitter (%)', 'Shimmer (dB)', 'NHR', 'HNR', 'PPE'],
+            datasets: [{
+              label: 'Current Patient',
+              data: [features.fo, features.jitter, features.shimmer, features.nhr, features.hnr, features.ppe],
+              backgroundColor: 'rgba(99, 102, 241, 0.2)',
+              borderColor: 'rgba(99, 102, 241, 1)',
+              borderWidth: 2,
+              pointBackgroundColor: 'rgba(99, 102, 241, 1)'
+            }, {
+              label: 'Parkinson\'s Average',
+              data: [148.5, 0.72, 0.35, 0.15, 16.8, 0.52],
+              backgroundColor: 'rgba(239, 68, 68, 0.2)',
+              borderColor: 'rgba(239, 68, 68, 1)',
+              borderWidth: 2,
+              pointBackgroundColor: 'rgba(239, 68, 68, 1)'
+            }, {
+              label: 'Healthy Average',
+              data: [142.1, 0.42, 0.22, 0.08, 22.3, 0.28],
+              backgroundColor: 'rgba(16, 185, 129, 0.2)',
+              borderColor: 'rgba(16, 185, 129, 1)',
+              borderWidth: 2,
+              pointBackgroundColor: 'rgba(16, 185, 129, 1)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: { angleLines: { display: true }, suggestedMin: 0 }
+            }
+          }
+        });
+      }
+      
+      // Tab Switching
+      function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.getElementById(`${tabName}Tab`).classList.add('active');
+        const tabButtons = document.querySelectorAll('.tab');
+        for (let i = 0; i < tabButtons.length; i++) {
+          if (tabButtons[i].textContent.toLowerCase().includes(tabName)) {
+            tabButtons[i].classList.add('active');
+            break;
+          }
+        }
+      }
+      
+      // Section Switching
+      function switchSection(sectionName) {
+        document.querySelectorAll('.main-content > div').forEach(section => section.style.display = 'none');
+        document.querySelectorAll('.nav-links a, .sidebar-menu a').forEach(link => link.classList.remove('active'));
+        document.getElementById(`${sectionName}Section`).style.display = 'block';
+        
+        const navLink = document.querySelector(`.nav-links a[data-section="${sectionName}"]`);
+        const sidebarLink = document.querySelector(`.sidebar-menu a[data-section="${sectionName}"]`);
+        if (navLink) navLink.classList.add('active');
+        if (sidebarLink) sidebarLink.classList.add('active');
+  
+        if (sectionName === 'voiceAnalysis') {
+          switchTab('voiceAnalysis');
+          document.getElementById('dashboardSection').style.display = 'block';
+        }
+      }
+      
+      // Navigation and Sidebar Buttons
+      document.querySelectorAll('.nav-links a, .sidebar-menu a').forEach(link => {
+        link.addEventListener('click', function() {
+          const section = this.getAttribute('data-section');
+          switchSection(section);
+        });
+      });
+      
+      // Auth Buttons
+      document.querySelector('.login-btn').addEventListener('click', () => {
+        alert('Login functionality coming soon! Please enter your credentials in a future update.');
+      });
+      
+      document.querySelector('.signup-btn').addEventListener('click', () => {
+        alert('Sign up functionality coming soon! Register to access advanced features in a future update.');
+      });
+      
+          // Audio Recorder
+    const recordBtn = document.getElementById('recordBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    let isRecording = false;
+    let mediaRecorder;
+    let audioChunks = [];
+    
+    recordBtn.addEventListener('click', async function() {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          
+          mediaRecorder.ondataavailable = (e) => {
+            audioChunks.push(e.data);
+          };
+          
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            audioChunks = [];
+            const audioUrl = URL.createObjectURL(audioBlob);
+            
+            // Visualize audio
+            visualizeAudio(audioBlob);
+            
+            // Simulate feature extraction
+            setTimeout(() => {
+              const features = simulateVoiceAnalysis();
+              displayExtractedFeatures(features);
+            }, 1500);
+          };
+          
+          mediaRecorder.start();
+          this.innerHTML = '<i class="fas fa-circle"></i>';
+          this.style.backgroundColor = '#dc2626';
+          stopBtn.disabled = false;
+          isRecording = true;
+          
+          // Create simple audio visualization
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const analyser = audioContext.createAnalyser();
+          const microphone = audioContext.createMediaStreamSource(stream);
+          microphone.connect(analyser);
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = document.getElementById('audioVisualizer').offsetWidth;
+          canvas.height = document.getElementById('audioVisualizer').offsetHeight;
+          document.getElementById('audioVisualizer').innerHTML = '';
+          document.getElementById('audioVisualizer').appendChild(canvas);
+          
+          const canvasCtx = canvas.getContext('2d');
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          
+          function draw() {
+            if (!isRecording) return;
+            
+            requestAnimationFrame(draw);
+            analyser.getByteTimeDomainData(dataArray);
+            
+            canvasCtx.fillStyle = 'rgba(15, 23, 42, 0.3)';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = 'rgba(99, 102, 241, 1)';
+            canvasCtx.beginPath();
+            
+            const sliceWidth = canvas.width * 1.0 / bufferLength;
+            let x = 0;
+            
+            for (let i = 0; i < bufferLength; i++) {
+              const v = dataArray[i] / 128.0;
+              const y = v * canvas.height / 2;
+              
+              if (i === 0) {
+                canvasCtx.moveTo(x, y);
+              } else {
+                canvasCtx.lineTo(x, y);
+              }
+              
+              x += sliceWidth;
+            }
+            
+            canvasCtx.lineTo(canvas.width, canvas.height / 2);
+            canvasCtx.stroke();
+          }
+          
+          draw();
+          
+        } catch (err) {
+          console.error('Error accessing microphone:', err);
+          alert('Could not access microphone. Please ensure you have granted permission.');
+        }
+      }
+    });
+    
+    stopBtn.addEventListener('click', function() {
+      if (isRecording && mediaRecorder) {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        
+        recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        recordBtn.style.backgroundColor = 'var(--danger)';
+        this.disabled = true;
+        isRecording = false;
+      }
+    });
+    
+    function visualizeAudio(audioBlob) {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const fileReader = new FileReader();
+      
+      fileReader.onload = function() {
+        audioContext.decodeAudioData(this.result)
+          .then(buffer => {
+            const canvas = document.createElement('canvas');
+            canvas.width = document.getElementById('audioVisualizer').offsetWidth;
+            canvas.height = document.getElementById('audioVisualizer').offsetHeight;
+            document.getElementById('audioVisualizer').innerHTML = '';
+            document.getElementById('audioVisualizer').appendChild(canvas);
+            
+            const canvasCtx = canvas.getContext('2d');
+            const data = buffer.getChannelData(0);
+            const step = Math.ceil(data.length / canvas.width);
+            const amp = canvas.height / 2;
+            
+            canvasCtx.fillStyle = 'rgba(15, 23, 42, 0.3)';
+            canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = 'rgba(99, 102, 241, 1)';
+            canvasCtx.beginPath();
+            
+            for (let i = 0; i < canvas.width; i++) {
+              const min = 1.0;
+              const max = -1.0;
+              
+              for (let j = 0; j < step; j++) {
+                const datum = data[(i * step) + j];
+                if (datum < min) min = datum;
+                if (datum > max) max = datum;
+              }
+              
+              canvasCtx.moveTo(i, (1 + min) * amp);
+              canvasCtx.lineTo(i, (1 + max) * amp);
+            }
+            
+            canvasCtx.stroke();
+          })
+          .catch(err => {
+            console.error('Error decoding audio:', err);
+            document.getElementById('audioVisualizer').innerHTML = '<p>Audio visualization not available</p>';
+          });
+      };
+      
+      fileReader.readAsArrayBuffer(audioBlob);
+    }
+    
+    uploadBtn.addEventListener('click', function() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.wav,audio/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        document.getElementById('audioVisualizer').innerHTML = '<p>Processing audio file...</p>';
+        
+        // Simulate processing time
+        setTimeout(() => {
+          visualizeAudio(file);
+          const features = simulateVoiceAnalysis();
+          displayExtractedFeatures(features);
+        }, 2000);
+      };
+      input.click();
+    });
+    
+    function simulateVoiceAnalysis() {
+      return {
+        fo: (Math.random() * 60 + 120).toFixed(2),
+        jitter: (Math.random() * 0.5 + 0.3).toFixed(2),
+        shimmer: (Math.random() * 0.2 + 0.2).toFixed(2),
+        nhr: (Math.random() * 0.1 + 0.05).toFixed(2),
+        hnr: (Math.random() * 10 + 15).toFixed(2),
+        ppe: (Math.random() * 0.3 + 0.2).toFixed(2)
+      };
+    }
+    
+    function displayExtractedFeatures(features) {
+      const table = document.getElementById('featuresTable');
+      table.innerHTML = `
+        <tr><th>Feature</th><th>Value</th><th>Normal Range</th><th>Status</th></tr>
+        <tr><td>MDVP: Fo (Hz)</td><td>${features.fo}</td><td>120-180</td><td>${features.fo >= 120 && features.fo <= 180 ? '<span class="text-success">Normal</span>' : '<span class="text-danger">Abnormal</span>'}</td></tr>
+        <tr><td>Jitter (%)</td><td>${features.jitter}</td><td>< 0.5</td><td>${features.jitter < 0.5 ? '<span class="text-success">Normal</span>' : '<span class="text-danger">High</span>'}</td></tr>
+        <tr><td>Shimmer (dB)</td><td>${features.shimmer}</td><td>< 0.3</td><td>${features.shimmer < 0.3 ? '<span class="text-success">Normal</span>' : '<span class="text-danger">High</span>'}</td></tr>
+        <tr><td>NHR</td><td>${features.nhr}</td><td>< 0.1</td><td>${features.nhr < 0.1 ? '<span class="text-success">Normal</span>' : '<span class="text-danger">High</span>'}</td></tr>
+        <tr><td>HNR</td><td>${features.hnr}</td><td>> 20</td><td>${features.hnr > 20 ? '<span class="text-success">Normal</span>' : '<span class="text-danger">Low</span>'}</td></tr>
+        <tr><td>PPE</td><td>${features.ppe}</td><td>< 0.4</td><td>${features.ppe < 0.4 ? '<span class="text-success">Normal</span>' : '<span class="text-danger">High</span>'}</td></tr>
+      `;
+      document.getElementById('extractedFeatures').style.display = 'block';
+      document.getElementById('runPredictionFromFeatures').onclick = () => runPrediction(features);
+    }
+    
+    // Prediction Form
+    document.getElementById('predictionForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const features = {
+        fo: parseFloat(document.getElementById('fo').value),
+        jitter: parseFloat(document.getElementById('jitter').value),
+        shimmer: parseFloat(document.getElementById('shimmer').value),
+        nhr: parseFloat(document.getElementById('nhr').value),
+        hnr: parseFloat(document.getElementById('hnr').value),
+        ppe: parseFloat(document.getElementById('ppe').value)
+      };
+      const patientData = {
+        patient: document.getElementById('patientName').value,
+        age: parseInt(document.getElementById('patientAge').value),
+        location: document.getElementById('patientLocation').value,
+        features: features
+      };
+      runPrediction(features, patientData);
+    });
+    
+    function runPrediction(features, patientData = null) {
+      // Calculate risk score based on feature values
+      const score = (features.jitter > 0.5 ? 20 : 0) +
+                   (features.shimmer > 0.3 ? 20 : 0) +
+                   (features.nhr > 0.1 ? 20 : 0) +
+                   (features.hnr < 20 ? 20 : 0) +
+                   (features.ppe > 0.4 ? 20 : 0);
+      
+      // Calculate confidence percentage (60-95%)
+      const confidence = Math.min(95, 60 + score * 0.7);
+      const result = score > 50 ? "Positive" : "Negative";
+      
+      if (patientData) {
+        // Add to prediction history
+        const today = new Date().toISOString().split('T')[0];
+        predictionHistory.unshift({
+          date: today,
+          patient: patientData.patient,
+          age: patientData.age,
+          location: patientData.location,
+          result: result,
+          confidence: confidence,
+          features: features
+        });
+        
+        // Update history table
+        updateHistoryTable();
+        
+        // Show prediction result
+        const resultDiv = document.getElementById('predictionResult');
+        resultDiv.innerHTML = `
+          <div class="result-header">
+            <div class="result-icon ${result === 'Positive' ? 'result-positive' : 'result-negative'}">
+              <i class="fas fa-${result === 'Positive' ? 'exclamation-triangle' : 'check-circle'}"></i>
+            </div>
+            <div>
+              <div class="result-title">Prediction Result: <span class="${result === 'Positive' ? 'text-danger' : 'text-success'}">${result}</span></div>
+              <div>Confidence: ${confidence.toFixed(0)}%</div>
+            </div>
+          </div>
+          <div class="result-details mt-4">
+            <div class="result-detail">
+              <div class="detail-label">Patient</div>
+              <div class="detail-value">${patientData.patient}</div>
+            </div>
+            <div class="result-detail">
+              <div class="detail-label">Age</div>
+              <div class="detail-value">${patientData.age}</div>
+            </div>
+            <div class="result-detail">
+              <div class="detail-label">Location</div>
+              <div class="detail-value">${patientData.location}</div>
+            </div>
+            <div class="result-detail">
+              <div class="detail-label">Risk Factors</div>
+              <div class="detail-value">${score > 50 ? 'Multiple' : 'Few'}</div>
+            </div>
+          </div>
+        `;
+        resultDiv.style.display = 'block';
+        resultDiv.className = `prediction-result ${result === 'Positive' ? 'result-positive' : 'result-negative'}`;
+      }
+      
+      // Update comparison chart and analysis
+      updateComparisonChart(features);
+      updateComparativeAnalysis(features, result, confidence);
+      switchTab('comparison');
+    }
+    
+    function updateComparativeAnalysis(features, result, confidence) {
+      const observations = [];
+      const recommendations = [];
+      
+      if (features.jitter > 0.5) observations.push("Higher than normal jitter (variation in frequency)");
+      if (features.shimmer > 0.3) observations.push("Elevated shimmer (variation in amplitude)");
+      if (features.nhr > 0.1) observations.push("Elevated noise-to-harmonics ratio (NHR)");
+      if (features.hnr < 20) observations.push("Reduced harmonics-to-noise ratio (HNR)");
+      if (features.ppe > 0.4) observations.push("High pitch period entropy (PPE)");
+      
+      if (observations.length === 0) {
+        observations.push("All voice features within normal range");
+      }
+      
+      if (result === "Positive") {
+        recommendations.push("Consult a neurologist for further evaluation");
+        recommendations.push("Consider speech therapy exercises");
+        recommendations.push("Schedule follow-up voice analysis in 3 months");
+        recommendations.push("Monitor for motor symptoms like tremors or stiffness");
+      } else {
+        recommendations.push("Maintain regular health check-ups");
+        recommendations.push("Monitor for any changes in voice or motor skills");
+        recommendations.push("Consider annual screening if over age 60");
+      }
+      
+      document.getElementById('keyObservations').innerHTML = observations.map(obs => `<li><i class="fas fa-circle text-xs mr-2 text-primary"></i>${obs}</li>`).join('');
+      document.getElementById('recommendations').innerHTML = recommendations.map(rec => `<li><i class="fas fa-circle text-xs mr-2 text-primary"></i>${rec}</li>`).join('');
+    }
+    
+    // History Table
+    function updateHistoryTable() {
+      const tbody = document.getElementById('historyBody');
+      const resultFilter = document.getElementById('resultFilter').value;
+      const searchName = document.getElementById('searchName').value.toLowerCase();
+      
+      let filteredHistory = predictionHistory.filter(item => {
+        const matchesResult = resultFilter === "All Results" || item.result === resultFilter.split(' ')[0];
+        const matchesName = item.patient.toLowerCase().includes(searchName);
+        return matchesResult && matchesName;
+      });
+      
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const paginatedHistory = filteredHistory.slice(start, end);
+      
+      tbody.innerHTML = paginatedHistory.map((item, index) => `
+        <tr>
+          <td>${item.date}</td>
+          <td>${item.patient}</td>
+          <td>${item.age}</td>
+          <td>${item.location}</td>
+          <td><span class="${item.result === 'Positive' ? 'text-danger' : 'text-success'}">${item.result}</span></td>
+          <td>${item.confidence}%</td>
+          <td>
+            <button onclick="viewPrediction(${start + index})" class="btn btn-secondary btn-sm"><i class="fas fa-eye"></i> View</button>
+            <button onclick="exportPrediction(${start + index})" class="btn btn-secondary btn-sm"><i class="fas fa-download"></i> Export</button>
+          </td>
+        </tr>
+      `).join('');
+      
+      document.getElementById('paginationInfo').textContent = `Showing ${start + 1}-${Math.min(end, filteredHistory.length)} of ${filteredHistory.length} predictions`;
+      document.getElementById('prevPage').disabled = currentPage === 1;
+      document.getElementById('nextPage').disabled = end >= filteredHistory.length;
+    }
+    
+    function viewPrediction(index) {
+      const item = predictionHistory[index];
+      
+      // Fill the prediction form with the selected data
+      document.getElementById('patientName').value = item.patient;
+      document.getElementById('patientAge').value = item.age;
+      document.getElementById('patientLocation').value = item.location;
+      document.getElementById('fo').value = item.features.fo;
+      document.getElementById('jitter').value = item.features.jitter;
+      document.getElementById('shimmer').value = item.features.shimmer;
+      document.getElementById('nhr').value = item.features.nhr;
+      document.getElementById('hnr').value = item.features.hnr;
+      document.getElementById('ppe').value = item.features.ppe;
+      
+      // Show the prediction result
+      const resultDiv = document.getElementById('predictionResult');
+      resultDiv.innerHTML = `
+        <div class="result-header">
+          <div class="result-icon ${item.result === 'Positive' ? 'result-positive' : 'result-negative'}">
+            <i class="fas fa-${item.result === 'Positive' ? 'exclamation-triangle' : 'check-circle'}"></i>
+          </div>
+          <div>
+            <div class="result-title">Prediction Result: <span class="${item.result === 'Positive' ? 'text-danger' : 'text-success'}">${item.result}</span></div>
+            <div>Confidence: ${item.confidence}%</div>
+          </div>
+        </div>
+      `;
+      resultDiv.style.display = 'block';
+      resultDiv.className = `prediction-result ${item.result === 'Positive' ? 'result-positive' : 'result-negative'}`;
+      
+      // Update comparison chart
+      updateComparisonChart(item.features);
+      updateComparativeAnalysis(item.features, item.result, item.confidence);
+      
+      // Switch to prediction tab
+      switchTab('prediction');
+    }
+    
+    function exportPrediction(index) {
+      const item = predictionHistory[index];
+      const csv = `Date,Patient,Age,Location,Result,Confidence,Fo,Jitter,Shimmer,NHR,HNR,PPE\n${item.date},${item.patient},${item.age},${item.location},${item.result},${item.confidence},${item.features.fo},${item.features.jitter},${item.features.shimmer},${item.features.nhr},${item.features.hnr},${item.features.ppe}`;
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${item.patient}_prediction_${item.date}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    // Pagination
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        updateHistoryTable();
+      }
+    });
+    
+    document.getElementById('nextPage').addEventListener('click', () => {
+      currentPage++;
+      updateHistoryTable();
+    });
+    
+    // Filter Events
+    document.getElementById('resultFilter').addEventListener('change', () => {
+      currentPage = 1;
+      updateHistoryTable();
+    });
+    
+    document.getElementById('searchName').addEventListener('input', () => {
+      currentPage = 1;
+      updateHistoryTable();
+    });
+    
+    document.getElementById('timeFilter').addEventListener('change', function() {
+      alert(`Filtering data for: ${this.value}`);
+      // In a real app, you would filter the predictionHistory array by date
+      currentPage = 1;
+      updateHistoryTable();
+    });
+    
+    // Filter Buttons
+    document.getElementById('mapTimeFilter').addEventListener('change', function() {
+      alert(`Filtering map data for: ${this.value}`);
+      // In a real app, update map markers based on time filter
+    });
+    
+    document.getElementById('ageRiskFilter').addEventListener('change', function() {
+      const filter = this.value;
+      let newData;
+      
+      if (filter === 'Positive Cases') {
+        newData = [3, 10, 25, 40, 50];
+      } else if (filter === 'Negative Cases') {
+        newData = [2, 5, 10, 15, 15];
+      } else {
+        newData = [5, 15, 35, 55, 65];
+      }
+      
+      ageRiskChart.data.datasets[0].data = newData;
+      ageRiskChart.update();
+    });
+    
+    document.getElementById('analyticsTimeFilter').addEventListener('change', function() {
+      alert(`Filtering analytics data for: ${this.value}`);
+      // In a real app, update charts based on time filter
+    });
+    
+    // Add Patient Modal
+    const addPatientModal = document.getElementById('addPatientModal');
+    const addPatientBtn = document.getElementById('addPatientBtn');
+    const closeModalBtns = document.querySelectorAll('.close-modal');
+    
+    addPatientBtn.addEventListener('click', () => {
+      addPatientModal.style.display = 'flex';
+    });
+    
+    closeModalBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        addPatientModal.style.display = 'none';
+      });
+    });
+    
+    window.addEventListener('click', (e) => {
+      if (e.target === addPatientModal) {
+        addPatientModal.style.display = 'none';
+      }
+    });
+    
+    document.getElementById('addPatientForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // In a real app, you would save the patient data to a database
+      alert('Patient added successfully!');
+      addPatientModal.style.display = 'none';
+      this.reset();
+    });
+    
+    // Settings Form
+    document.getElementById('settingsForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Settings saved successfully!');
+    });
+    
+    // Notification Form
+    document.getElementById('notificationForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      alert('Notification preferences updated!');
+    });
+    
+    // Generate Report
+    function generateReport(type) {
+      let reportContent = '';
+      
+      switch(type) {
+        case 'monthly':
+          reportContent = 'Monthly summary report generated';
+          break;
+        case 'patient':
+          reportContent = 'Patient report generated';
+          break;
+        case 'statistical':
+          reportContent = 'Statistical analysis report generated';
+          break;
+      }
+      
+      alert(`${reportContent}\n\nThis would download a PDF in a real application.`);
+    }
+    
+    // Initial setup
+    updateHistoryTable();
+    updateComparisonChart(predictionHistory[0].features);
+    switchSection('dashboard');
+  </script>
+</body>
+</html>

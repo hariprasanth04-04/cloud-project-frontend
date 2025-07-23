@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voice Features</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Enter Voice Features</h1>
+        <form onsubmit="submitFeatures(event)">
+            <input type="number" step="any" id="MDVP_Fo" placeholder="MDVP: Fo (Hz)" required>
+            <input type="number" step="any" id="MDVP_Jitter" placeholder="MDVP: Jitter (%)" required>
+            <input type="number" step="any" id="MDVP_Shimmer" placeholder="MDVP: Shimmer (%)" required>
+            <input type="number" step="any" id="HNR" placeholder="HNR" required>
+            <input type="number" step="any" id="RPDE" placeholder="RPDE" required>
+            <input type="number" step="any" id="DFA" placeholder="DFA" required>
+            <!-- Add more fields here as needed -->
+            <button type="submit">Get Prediction</button>
+        </form>
+    </div>
+
+    <script>
+        function submitFeatures(event) {
+            event.preventDefault();
+            // You can collect features here if needed
+            window.location.href = 'result.html';
+        }
+    </script>
+</body>
+</html>
