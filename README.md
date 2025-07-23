@@ -30,6 +30,12 @@ This is the frontend design of a cloud-based web application built as part of a 
 
 - Integrate backend with Java and AWS
 - Add login system, dashboard, and database
+
+# Cloud Project Frontend
+
+This is a UI/UX project designed and developed as part of my college mini-project.
+
+🔗 **Live Demo**: [Click here to view](https://hariprasanth04-04.github.io/cloud-project-frontend/)
 - Host on GitHub Pages or AWS S3
 
 ---
